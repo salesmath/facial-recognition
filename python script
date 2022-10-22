@@ -1,0 +1,99 @@
+# For entertainment purposes only.
+# This program detect faces in an image. The program then implements facial recognition
+# to determine if an individual face is present in a group of faces. 
+
+from PIL import Image
+from PIL import ImageDraw
+import numpy as np
+import face_recognition
+
+# Load the file into a numpy array
+image1 = face_recognition.load_image_file("image1.png")
+
+# Find all the faces in the image and facial features
+face_locations = face_recognition.face_locations(image1)
+face_landmarks_list = face_recognition.face_landmarks(image1)
+
+number_of_faces = len(face_locations)
+print("I found {} face(s) in this photograph.".format(number_of_faces))
+
+pil_image = Image.fromarray(image1)
+
+for face_location in face_locations:
+    top, right, bottom, left = face_location
+    draw = ImageDraw.Draw(pil_image)
+    draw.rectangle([left, top, right, bottom], outline="red")
+
+pil_image.show()
+
+# Load the file into a numpy array
+image2 = face_recognition.load_image_file("image2.png")
+
+# Find all facial features in all the faces in the image
+face_landmarks_list = face_recognition.face_landmarks(image2)
+
+number_of_faces = len(face_landmarks_list)
+print("I found {} face(s) in this photograph.".format(number_of_faces))
+
+# Load the image into a Python Image Library object so that we can draw on top of it and display it
+pil_image = Image.fromarray(image2)
+
+# Create a PIL drawing object to be able to draw lines later
+draw = ImageDraw.Draw(pil_image)
+
+# Loop over each face
+for face_landmarks in face_landmarks_list:
+    for name, list_of_points in face_landmarks.items():
+        draw.line(list_of_points, fill="red", width=2)
+
+pil_image.show()
+
+
+face_encodings = face_recognition.face_encodings(image1)
+
+if len(face_encodings) == 0:
+    # No faces found in the image.
+    print("No faces were found.")
+
+else:
+    # Grab the first face encoding
+    first_face_encoding = face_encodings[0]
+
+    # Print the results
+    print(first_face_encoding)
+
+    
+# Load the known images
+image_of_person_1 = face_recognition.load_image_file("image1.png")
+image_of_person_2 = face_recognition.load_image_file("image2.png")
+
+# Get the face encoding of each person. This can fail if no one is found in the photo.
+person_1_face_encoding = face_recognition.face_encodings(image_of_person_1)[0]
+person_2_face_encoding = face_recognition.face_encodings(image_of_person_2)[0]
+
+# Create a list of all known face encodings
+known_face_encodings = [
+    person_1_face_encoding,
+    person_2_face_encoding]
+
+# Load the image we want to check
+unknown_image = face_recognition.load_image_file("image2.png")
+
+# Get face encodings for any people in the picture
+face_locations = face_recognition.face_locations(unknown_image, number_of_times_to_upsample=2)
+unknown_face_encodings = face_recognition.face_encodings(unknown_image, known_face_locations=face_locations)
+
+# There might be more than one person in the photo, so we need to loop over each face we found
+for unknown_face_encoding in unknown_face_encodings:
+
+    # Test if this unknown face encoding matches any of the three people we know
+    results = face_recognition.compare_faces(known_face_encodings, unknown_face_encoding, tolerance=0.6)
+
+    name = "Unknown"
+
+    if results[0]:
+        name = "Person 1"
+    elif results[1]:
+        name = "Person 2"
+
+    print(f"Found {name} in the photo!")
